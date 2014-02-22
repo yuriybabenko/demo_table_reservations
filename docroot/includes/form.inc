@@ -1405,6 +1405,7 @@ function _form_validate(&$elements, &$form_state, $form_id = NULL) {
         // Instead of setting no #title, form constructors are encouraged to set
         // #title_display to 'invisible' to improve accessibility.
         if (isset($elements['#title'])) {
+          dsmm($elements);
           form_error($elements, $t('!name field is required.', array('!name' => $elements['#title'])));
         }
         else {

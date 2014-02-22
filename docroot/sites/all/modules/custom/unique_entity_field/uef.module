@@ -1,0 +1,209 @@
+<?php
+
+/*----------------------------------------------------------------------------
+      DRUPAL HOOKS
+----------------------------------------------------------------------------*/
+
+/**
+ * Implements hook_form_alter().
+ */
+function uef_form_alter(&$form, &$form_state, $form_id) {
+  // get entity types which must have unique titles
+  $uef_titles = array_filter(variable_get('uef_entity_type', array()), function($val) {
+    return $val;
+  });
+
+  // individual field settings
+  if ($form_id == 'field_ui_field_edit_form') {
+    // add checkbox to flag field as unique
+    $form['instance']['unique'] = array(
+      '#type' => 'checkbox',
+      '#default_value' => isset($form['#instance']['unique']) ? $form['#instance']['unique'] : 0,
+      '#title' => t('Field value must be unique.'),
+    );
+  }
+  // entity type form
+  elseif ($form_id == 'eck__entity_type__form') {
+    // add checkbox to flag entity titles as unique
+    $entity_type = $form['entity_type_name']['#default_value'];
+
+    $form['title_unique'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Entity Title must be unique.'),
+      '#default_value' => isset($uef_titles[$entity_type]) ? 1 : 0,
+    );
+
+    $form['#submit'][] = 'uef_entity_form_submit';
+  }
+  // individual entity forms of entity:bundle combinations w/ unique titles
+  elseif (preg_match('#^eck__entity__form_edit|add_(' . implode('|', array_keys($uef_titles)) . ')_(.+)#', $form_id, $matches)) {
+    $form['#validate'][] = 'euf_title_validate';
+  }
+}
+
+/**
+ * Implements uef_field_attach_validate().
+ */
+function uef_field_attach_validate($entity_type, $entity, &$errors) {
+  $info = entity_get_info($entity_type);
+
+  if (!isset($info['entity keys']['bundle']) || !$info['entity keys']['bundle']) {
+    return;
+  }
+  
+  // find the names of id and bundle fields
+  $id_key     = $info['entity keys']['id'];
+  $bundle_key = $info['entity keys']['bundle'];
+
+  // get entity id
+  $id = NULL;
+  if (isset($entity->{$id_key})) {
+    $id = $entity->{$id_key};
+  }
+
+  // pull up list of fields on this bundle
+  $lang = isset($entity->language) ? $entity->language : LANGUAGE_NONE;
+  $fields_list = field_info_instances($entity_type, $entity->{$bundle_key});
+
+  foreach ($fields_list as $field_name => $field_settings) {
+    // field is marked as needing to be unique
+    if (isset($field_settings['unique']) && $field_settings['unique']) {
+      // field instances
+      $field_items = field_get_items($entity_type, $entity, $field_name, $lang);
+
+      foreach ($field_items as $delta => $item) {
+        // sanity check
+        if (!isset($item['value'])) {
+          continue;
+        }
+
+        // check for uniqueness
+        $unique = uef_field_is_unique($entity_type, $entity->{$bundle_key}, $field_name, $item['value'], $id_key, $id);
+
+        if (!$unique) {
+          $errors[$field_name][$lang][$delta][] = array(
+            'error' => $field_name,
+            'message' => t('%field must be a unique value.', array(
+              '%field' => $field_settings['label'],
+            )),
+          );
+        }
+      }
+    }
+  }
+}
+
+/*----------------------------------------------------------------------------
+      FORMS
+----------------------------------------------------------------------------*/
+
+/**
+ * Validation handler for individual entity forms of entity:bundle combinations 
+ * w/ unique titles.
+ * 
+ * @param  [type] $form       [description]
+ * @param  [type] $form_state [description]
+ * @return [type]             [description]
+ */
+function euf_title_validate($form, &$form_state) {
+  $values = $form_state['values'];
+  $entity = $values['entity'];
+  $entity_type = $form['#entity_type'];
+
+  $info = entity_get_info($entity_type);
+
+  if (!isset($info['entity keys']['bundle']) || !$info['entity keys']['bundle']) {
+    return;
+  }
+  
+  $id_key     = $info['entity keys']['id'];
+  $bundle_key = $info['entity keys']['bundle'];
+  $title_key  = $info['entity keys']['label'];
+
+  // get entity id
+  $id = NULL;
+  if (isset($entity->{$id_key})) {
+    $id = $entity->{$id_key};
+  }
+
+  $unique = uef_property_is_unique($entity_type, $entity->{$bundle_key}, $title_key, $values[$title_key], $id_key, $id);
+
+  if (!$unique) {
+    form_set_error($title_key, t('Title must be a unique value.'));
+  }
+}
+
+/**
+ * Submit handler for eck__entity_type__form.
+ *
+ * Updates the Unique Entity Title flag for the current Entity Type.
+ * 
+ * @param  [type] $form       [description]
+ * @param  [type] $form_state [description]
+ * @return [type]             [description]
+ */
+function uef_entity_form_submit($form, &$form_state) {
+  $uef_titles = variable_get('uef_entity_type', array());
+
+  $uef_titles[$form_state['values']['entity_type_name']] = $form_state['values']['title_unique'];
+
+  variable_set('uef_entity_type', $uef_titles);
+}
+
+/*----------------------------------------------------------------------------
+      INTERNAL
+----------------------------------------------------------------------------*/
+
+/**
+ * Checks whether $field_name:$value is a unique property combination in specified
+ * $entity_type:$bundle.
+ * 
+ * @param  String $entity_type Entity type.
+ * @param  String $bundle      Entity bundle.
+ * @param  String $field_name  Machine name of field.
+ * @param  String $value       Value of field.
+ * @param  String $prop_name   Name of property to exclude from check.
+ * @param  String $prop_value  Value of property to exclude from check.
+ * @return Boolean             True if field's value is unique.
+ */
+function uef_property_is_unique($entity_type, $bundle, $field_name, $value, $prop_name = NULL, $prop_value = NULL) {
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', $entity_type)
+    ->entityCondition('bundle', $bundle)
+    ->propertyCondition($field_name, $value, '=')
+    ->range(0, 1)
+    ->addMetaData('account', user_load(1)); // run query as UID = 1 to avoid permission issues
+
+  if (!is_null($prop_name) && !is_null($prop_value)) {
+    $query->propertyCondition($prop_name, $prop_value, '!=');
+  }
+
+  return !$query->execute();
+}
+
+/**
+ * Checks whether $field_name:$value is a unique field combination in specified
+ * $entity_type:$bundle.
+ * 
+ * @param  String $entity_type Entity type.
+ * @param  String $bundle      Entity bundle.
+ * @param  String $field_name  Machine name of field.
+ * @param  String $value       Value of field.
+ * @param  String $prop_name   Name of property to exclude from check.
+ * @param  String $prop_value  Value of property to exclude from check.
+ * @return Boolean             True if field's value is unique.
+ */
+function uef_field_is_unique($entity_type, $bundle, $field_name, $value, $prop_name = NULL, $prop_value = NULL) {
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', $entity_type)
+    ->entityCondition('bundle', $bundle)
+    ->fieldCondition($field_name, 'value', $value, '=')
+    ->range(0, 1)
+    ->addMetaData('account', user_load(1)); // run query as UID = 1 to avoid permission issues
+
+  if (!is_null($prop_name) && !is_null($prop_value)) {
+    $query->propertyCondition($prop_name, $prop_value, '!=');
+  }
+
+  return !$query->execute();
+}

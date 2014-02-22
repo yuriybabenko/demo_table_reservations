@@ -1,5 +1,5 @@
 Demo Project: Restaurant Table Reservation System
-===================================
+=====
 Goal:
   Develop a system that will allow users to reserve tables at a restaurant.
 
@@ -19,3 +19,15 @@ Assumptions:
 - Each member of a party brings in $30 per visit
 - Currently the frontend development is done by you, but in the future the company may want to outsource development of the frontend to another company, but doesn't wish to give the backend source code to that company.
 - Built on PHP, Drupal, MySQL
+
+Implementation Details
+=====
+Accounts:
+- admin/admin
+- owner/owner
+
+Entity Types:
+- Booking, 'restaurant' bundle: restaurant reservation
+- Booking, 'catering' bundle: catering reservation - implementation skeleton only (for future functionality extension)
+- Seating, 'table' bundle: a table seating object
+- Seating, 'bar' bundle: a bar seating object - implementation skeleton only (for future functionality extension)

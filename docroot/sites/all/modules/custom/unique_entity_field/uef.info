@@ -1,0 +1,5 @@
+name = Unique Entity Field
+description = Provides options to force fields to only accept unique values.
+core = 7.x
+version = "7.x-1.0"
+package = Fields
