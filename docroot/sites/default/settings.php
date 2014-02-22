@@ -555,4 +555,7 @@ $conf['404_fast_html'] = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN"
 if (file_exists('./sites/default/local-settings.php')) {
   require_once('local-settings.php');
 }
+else {
+  die('Missing local-settings.php configuration file.');
+}
 

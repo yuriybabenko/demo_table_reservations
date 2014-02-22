@@ -1,0 +1,8 @@
+<?php
+
+if (module_exists('devtools')) {
+  devtools_load();
+}
+
+
+
