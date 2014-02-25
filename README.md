@@ -26,6 +26,10 @@ Additional assumptions:
 - A party can only spend an hour at the table
 - Latest allowed reservation is for 21:00
 
+Limitations:
+- Does not account for parties larger than max table size (ie. if the largest table in the system can fit 4 people, a party of 5 will never be allowed to reserve)
+- Entered phone value must be a real, North American phone number. Test values such as 123-123-1234 and 604-123-1234 will fail validation.
+
 Accounts:
 - admin/admin
 - owner/owner

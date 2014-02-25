@@ -148,7 +148,7 @@ function foodie_booking_field_default_field_bases() {
     'module' => 'list',
     'settings' => array(
       'allowed_values' => array(
-        'restaurant' => 'Restaurant',
+        'table' => 'Table',
         'bar' => 'Bar',
       ),
       'allowed_values_function' => '',

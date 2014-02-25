@@ -192,7 +192,7 @@ function foodie_booking_field_default_field_instances() {
     'bundle' => 'restaurant',
     'default_value' => array(
       0 => array(
-        'value' => 'restaurant',
+        'value' => 'table',
       ),
     ),
     'deleted' => 0,
@@ -219,6 +219,7 @@ function foodie_booking_field_default_field_instances() {
     'settings' => array(
       'user_register_form' => FALSE,
     ),
+    'unique' => 0,
     'widget' => array(
       'active' => 1,
       'module' => 'options',

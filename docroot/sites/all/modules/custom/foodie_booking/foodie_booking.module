@@ -17,6 +17,16 @@ define('FOODIE_BOOKING_PATH', drupal_get_path('module', 'foodie_booking'));
 ----------------------------------------------------------------------------*/
 
 /**
+ * Implements hook_init().
+ */
+function foodie_booking_init() {
+  // users don't need access to these internal pages
+  if (preg_match('#^booking|seating#', $_GET['q'])) {
+    drupal_goto();
+  }
+}
+
+/**
  * Implements hook_form_alter().
  */
 function foodie_booking_form_alter(&$form, &$form_state, $form_id) {
@@ -38,6 +48,9 @@ function foodie_booking_form_alter(&$form, &$form_state, $form_id) {
 
     // add clear after num people
     $form['field_num_people']['#suffix'] = '<div class="clear"></div>';
+
+    // update Submit button text
+    $form['submit']['#value'] = t('Make Reservation');
 
     // add class so we can target the form and add CSS
     $form['#attributes']['class'] = 'booking-entity-form';
@@ -141,8 +154,16 @@ function foodie_booking_restaurant_after_build($form, $form_state) {
 function foodie_booking_restaurant_validate($form, &$form_state) {
   $values = $form_state['values'];
 
-  $date = current(current($values['field_date']))['value'];
-  $date = new DateTime($date);
+  // depending on the state of validation of other fields, the value in field_date
+  // can be either a string or a timestamp... because Drupal, that's why.
+  $date_val = _single_form_value($values['field_date']);
+  if (is_numeric($date_val)) {
+    $date = new DateTime();
+    $date->setTimestamp($date_val);
+  }
+  else {
+    $date = new DateTime($date_val);
+  }
 
   // we're closed Sundays
   if ($date->format('l') == 'Sunday') {
@@ -161,8 +182,123 @@ function foodie_booking_restaurant_validate($form, &$form_state) {
   if ($diff->invert) {
     form_set_error('field_date', t('Reservations can only be made for future dates.'));
   }
+
+  // figure out whether we can fit this reservation
+  if ($seating_type = _single_form_value($values['field_seating_type'])) {
+    $query = new Foodie\EFQ();
+    $query->entityCondition('entity_type', 'seating')
+      ->entityCondition('bundle', $seating_type);
+
+    if ($result = $query->execute()) {
+      // build a data structure containing all possible seats (the "seat bank")
+        $all_seats = array();
+
+        $seating = entity_load('seating', array_keys($result['seating']));
+        foreach ($seating as $seat) {
+          $wrapper = entity_metadata_wrapper('seating', $seat);
+          $num_seats = $wrapper->field_num_seats->value();
+
+          $all_seats[$num_seats][] = $seat->id;
+        } 
+
+        // sort the table bank by table capacity for optimal seating selections
+        // below
+        ksort($all_seats);
+
+      // pull up all reservations for the same seating type that are +/- 45min of current item
+      // as that's the interval which will overlap and may have conflicts
+        $date_interval = new DateInterval('PT' . (60 * 45) . 'S');
+
+        $date_lower = clone $date;
+        $date_lower->sub($date_interval);
+
+        $date_upper = clone $date;
+        $date_upper->add($date_interval);
+      
+        $query = new Foodie\EFQ();
+        $query->entityCondition('entity_type', 'booking')
+          ->entityCondition('bundle', 'restaurant')
+          ->fieldCondition('field_date', 'value', $date_lower->getTimestamp(), '>=')
+          ->fieldCondition('field_date', 'value', $date_upper->getTimestamp(), '<=')
+          ->fieldOrderBy('field_date', 'value', 'ASC');
+
+      // go through existing reservations and remove the required seats from our seat bank
+        if ($result = $query->execute()) {
+          $bookings = entity_load('booking', array_keys($result['booking']));
+
+          foreach ($bookings as $booking) {
+            $wrapper = entity_metadata_wrapper('booking', $booking);
+            $num_people = $wrapper->field_num_people->value();
+          
+            // the party number matches a single table's capacity
+            if (isset($all_seats[$num_people])) {
+              _grab_seat($all_seats, $num_people);
+            }
+            else {
+              foreach (array_keys($all_seats) as $capacity) {
+                if ($capacity >= $num_people) {
+                  _grab_seat($all_seats, $capacity);
+                }
+              }
+            }
+          }
+        }
+
+      // now that we've removed seats which are already booked, we check what's left
+      // to see whether we can fit the current party
+        $can_reserve = FALSE;
+        $num_party = _single_form_value($values['field_num_people']);
+
+        if ($all_seats) {
+          foreach (array_keys($all_seats) as $capacity) {
+            if ($capacity >= $num_party) {
+              $can_reserve = TRUE;
+              break;
+            }
+          }
+        }
+
+      // final error out
+        if (!$can_reserve) {
+          form_set_error('field_num_people', t('We cannot accomodate a party of your size at the requested time.'));
+
+          // track the reservation denial
+          $denial_counter = variable_get('foodie_booking_reservation_denial', 0);
+          $denial_counter++;
+
+          variable_set('foodie_booking_reservation_denial', $denial_counter);
+        }
+    }
+  }
 }
 
 /*----------------------------------------------------------------------------
       INTERNAL
 ----------------------------------------------------------------------------*/
+
+/**
+ * Helper for easier access to submitted form values.
+ * 
+ * @param  [type] $field [description]
+ * @param  string $key   [description]
+ * @return [type]        [description]
+ */
+function _single_form_value($field, $key = 'value') {
+  return current(current($field))[$key];
+}
+
+/**
+ * Occupies a seat of given capacity in seat bank.
+ * 
+ * @param  [type] $all_seats [description]
+ * @param  [type] $capacity  [description]
+ * @return [type]            [description]
+ */
+function _grab_seat(&$all_seats, $capacity) {
+  array_pop($all_seats[$capacity]);
+
+  // was this the last table with this capacity?
+  if (empty($all_seats[$capacity])) {
+    unset($all_seats[$capacity]);
+  }
+}

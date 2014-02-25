@@ -3,6 +3,7 @@ description = Core configuration &amp; functionality.
 core = 7.x
 package = Foodie
 version = 7.x-1.0
+php = 5.4
 dependencies[] = ctools
 dependencies[] = strongarm
 features[ctools][] = strongarm:strongarm:1
