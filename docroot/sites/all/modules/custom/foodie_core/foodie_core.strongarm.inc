@@ -144,6 +144,7 @@ function foodie_core_strongarm() {
     'foodie_booking' => 1393049624,
     'foodie_seating' => 1393049624,
     'unique_field' => 1393050156,
+    'page_manager' => 1393107360,
   );
   $export['module_filter_recent_modules'] = $strongarm;
 
@@ -202,7 +203,7 @@ function foodie_core_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'site_frontpage';
-  $strongarm->value = 'node';
+  $strongarm->value = 'front';
   $export['site_frontpage'] = $strongarm;
 
   $strongarm = new stdClass();

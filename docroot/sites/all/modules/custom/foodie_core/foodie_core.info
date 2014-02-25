@@ -1,8 +1,8 @@
 name = Foodie Core
 description = Core configuration &amp; functionality.
 core = 7.x
-version = 7.x-1.0
 package = Foodie
+version = 7.x-1.0
 dependencies[] = ctools
 dependencies[] = strongarm
 features[ctools][] = strongarm:strongarm:1
