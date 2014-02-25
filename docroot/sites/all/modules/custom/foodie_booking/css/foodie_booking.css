@@ -1,0 +1,51 @@
+.booking-entity-form {
+  background: #eee;
+  padding: 10px;
+}
+.booking-entity-form .form-item {
+  padding-top: 0;
+}
+.booking-entity-form .form-item input[type=text] {
+  color: #666;
+  font-size: 1.2em;
+  padding: 5px 10px;
+  width: 180px;
+}
+.booking-entity-form .field-name-field-name,
+.booking-entity-form .field-name-field-phone,
+.booking-entity-form .field-name-field-seating-type,
+.booking-entity-form .field-name-field-num-people {
+  float: left;
+  width: 220px;
+}
+.booking-entity-form .field-name-field-date .form-wrapper {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.booking-entity-form .field-name-field-date .form-wrapper legend {
+  display: none;
+}
+.booking-entity-form .field-name-field-date .form-wrapper .fieldset-wrapper {
+  padding: 0;
+}
+.booking-entity-form .field-name-field-date .form-wrapper .fieldset-wrapper .date-no-float.container-inline-date {
+  width: 100%;
+}
+.booking-entity-form .field-name-field-date .form-wrapper .fieldset-wrapper .date-padding {
+  float: none;
+  padding: 0;
+}
+.booking-entity-form .field-name-field-date .form-wrapper .fieldset-wrapper .date-padding .form-item {
+  padding: 0 20px 0 0;
+  width: 200px;
+}
+/* remove Sundays from date calendar */
+#ui-datepicker-div .ui-datepicker-calendar tr th.ui-datepicker-week-end:first-child,
+#ui-datepicker-div .ui-datepicker-calendar tr td.ui-datepicker-week-end:first-child {
+  display: none;
+}
+.clear {
+  clear: both;
+  float: none;
+}

@@ -22,6 +22,10 @@ Assumptions:
 
 Implementation Details
 =====
+Additional assumptions:
+- A party can only spend an hour at the table
+- Latest allowed reservation is for 21:00
+
 Accounts:
 - admin/admin
 - owner/owner

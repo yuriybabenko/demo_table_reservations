@@ -10,7 +10,6 @@
 
 include_once 'foodie_core.features.inc';
 
-
 if (module_exists('devtools')) {
   devtools_load();
 }
@@ -18,6 +17,20 @@ if (module_exists('devtools')) {
 /*----------------------------------------------------------------------------
       DRUPAL HOOKS
 ----------------------------------------------------------------------------*/
+
+/**
+ * Implements hook_menu().
+ */
+function foodie_core_menu() {
+  $items['front'] = array(
+    'page callback' => 'foodie_core_front_page',
+    'access callback' => TRUE,
+    'file' => 'foodie_core.pages.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
 
 /*----------------------------------------------------------------------------
       MODULE HOOKS

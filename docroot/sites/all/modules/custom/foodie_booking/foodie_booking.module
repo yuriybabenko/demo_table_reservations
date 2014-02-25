@@ -10,13 +10,158 @@
 
 include_once 'foodie_booking.features.inc';
 
+define('FOODIE_BOOKING_PATH', drupal_get_path('module', 'foodie_booking'));
+
 /*----------------------------------------------------------------------------
       DRUPAL HOOKS
 ----------------------------------------------------------------------------*/
 
+/**
+ * Implements hook_form_alter().
+ */
+function foodie_booking_form_alter(&$form, &$form_state, $form_id) {
+  // booking restaurant
+  if (preg_match('#eck__entity__form_add|edit_booking_restaurant#', $form_id)) {
+    // make title non-required and hide it; we'll automatically generate a value for it
+    // in hook_entity_presave()
+    $form['title']['#required'] = FALSE;
+    $form['title']['#weight'] = -99;
+    $form['title']['#access'] = FALSE;
+
+    // add description to name field
+    $lang = $form['field_name']['#language'];
+    $form['field_name'][$lang][0]['value']['#description'] = t('Please enter your full name.');
+
+    // add description to phone field & clear 
+    $form['field_phone'][$lang][0]['value']['#description'] = t('Format: 1 (123) 123-1234');
+    $form['field_phone']['#suffix'] = '<div class="clear"></div>';
+
+    // add clear after num people
+    $form['field_num_people']['#suffix'] = '<div class="clear"></div>';
+
+    // add class so we can target the form and add CSS
+    $form['#attributes']['class'] = 'booking-entity-form';
+    $form['#attached']['css'][] = FOODIE_BOOKING_PATH . '/css/foodie_booking.css';
+    $form['#attached']['js'][] = FOODIE_BOOKING_PATH . '/js/foodie_booking.js';
+
+    // form handlers
+    $form['#after_build'][] = 'foodie_booking_restaurant_after_build';
+    $form['#validate'][] = 'foodie_booking_restaurant_validate';
+  }
+}
+
+/**
+ * Implements hook_entity_presave().
+ */
+function foodie_booking_entity_presave($entity, $type) {
+  if ($type == 'booking') {
+    if ($entity->type == 'restaurant') {
+      $wrapper = entity_metadata_wrapper($type, $entity);
+
+      $seating_type_options = $wrapper->field_seating_type->optionsList();
+
+      $wrapper->title->set(t('!seating - !name - !num - !date', array(
+        '!seating' => $seating_type_options[$wrapper->field_seating_type->value()],
+        '!name' => $wrapper->field_name->value(),
+        '!num' => $wrapper->field_num_people->value(),
+        '!date' => format_date($wrapper->field_date->value(), 'simple'),
+      )));
+    }
+  }
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function foodie_booking_block_info() {
+  $blocks['make_restaurant_reservation'] = array(
+    'info' => t('Make Restaurant Reservation'),
+    'cache' => DRUPAL_CACHE_PER_ROLE,
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function foodie_booking_block_view($delta = '') {
+  $block = array();
+
+  switch ($delta) {
+    case 'make_restaurant_reservation':
+      $booking = entity_create('booking', array('type' => 'restaurant'));
+      $form = drupal_get_form('eck__entity__form_add_booking_restaurant', $booking);
+
+      $block['subject'] = t('Make Restaurant Reservation');
+      $block['content'] = array(
+        '#markup' => drupal_render($form),
+      );
+
+      break;
+  }
+
+  return $block;
+}
+
 /*----------------------------------------------------------------------------
       MODULE HOOKS
 ----------------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------------
+      FORMS
+----------------------------------------------------------------------------*/
+
+/**
+ * After-build handler for eck__entity__form_add|edit_booking_restaurant
+ * @param  [type] $form       [description]
+ * @param  [type] $form_state [description]
+ * @return [type]             [description]
+ */
+function foodie_booking_restaurant_after_build($form, $form_state) {
+  // update the date field's description & default value  
+  $lang = $form['field_date']['#language'];
+  foreach ($form['field_date'][$lang] as &$item) {
+    if (isset($item['value']['time'])) {
+      // set default time value, but not if the form was submitted
+      if (!isset($form_state['triggering_element'])) {
+        $item['value']['time']['#value'] = '17:00';
+      }
+
+      $item['value']['time']['#description'] .= '. ' . t('Reservations can be made between 17:00 and 21:00.');
+    }
+  }
+
+  return $form;
+}
+
+/**
+ * Validation handler for for eck__entity__form_add|edit_booking_restaurant
+ */
+function foodie_booking_restaurant_validate($form, &$form_state) {
+  $values = $form_state['values'];
+
+  $date = current(current($values['field_date']))['value'];
+  $date = new DateTime($date);
+
+  // we're closed Sundays
+  if ($date->format('l') == 'Sunday') {
+    form_set_error('field_date', t('The restaurant is closed on Sundays.'));
+  }
+
+  // we're only open 5-10pm, so the latest acceptable reservation is at 21:00
+  $hour = $date->format('G');
+  if ($hour < 15 || $hour > 21) {
+    form_set_error('field_date', t('Reservations must be between 17:00 and 21:00 hours.'));
+  }
+
+  // account for past dates
+  $now  = new DateTime();
+  $diff = $now->diff($date);
+  if ($diff->invert) {
+    form_set_error('field_date', t('Reservations can only be made for future dates.'));
+  }
+}
 
 /*----------------------------------------------------------------------------
       INTERNAL

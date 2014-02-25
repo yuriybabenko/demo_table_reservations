@@ -56,6 +56,13 @@ function foodie_core_strongarm() {
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
+  $strongarm->name = 'date_format_simple';
+  $strongarm->value = 'F j, Y g:ia';
+  $export['date_format_simple'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
   $strongarm->name = 'default_nodes_main';
   $strongarm->value = '10';
   $export['default_nodes_main'] = $strongarm;

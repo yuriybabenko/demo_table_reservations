@@ -1,0 +1,70 @@
+.booking-entity-form {
+  background: #eee;
+  padding: 10px;
+
+  .form-item {
+    padding-top: 0;
+
+    input[type=text] {
+      color: #666;
+      font-size: 1.2em;
+      padding: 5px 10px;
+      width: 180px;
+    }
+  }
+
+  .field-name-field-name,
+  .field-name-field-phone,
+  .field-name-field-seating-type,
+  .field-name-field-num-people {
+    float: left;
+    width: 220px;
+  }
+
+  .field-name-field-date {
+    .form-wrapper {
+      border: 0;
+      margin: 0;
+      padding: 0;
+
+      legend {
+        display: none;
+      }
+
+      .fieldset-wrapper {
+        padding: 0;
+
+        .date-no-float.container-inline-date {
+          width: 100%;
+        }
+
+        .date-padding {
+          float: none;
+          padding: 0;
+
+          .form-item {
+            padding: 0 20px 0 0;
+            width: 200px;
+          }
+        }
+      } 
+    }
+  }
+}
+
+/* remove Sundays from date calendar */
+#ui-datepicker-div {
+  .ui-datepicker-calendar {
+    tr {
+      th.ui-datepicker-week-end:first-child,
+      td.ui-datepicker-week-end:first-child {
+        display: none;
+      }
+    }
+  }
+}
+
+.clear {
+  clear: both;
+  float: none;
+}

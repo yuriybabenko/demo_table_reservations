@@ -1,6 +1,7 @@
 name = Foodie Core
 description = Core configuration &amp; functionality.
 core = 7.x
+version = 7.x-1.0
 package = Foodie
 dependencies[] = ctools
 dependencies[] = strongarm
@@ -11,6 +12,7 @@ features[variable][] = badbot_forms_ids
 features[variable][] = clean_url
 features[variable][] = date_api_version
 features[variable][] = date_default_timezone
+features[variable][] = date_format_simple
 features[variable][] = default_nodes_main
 features[variable][] = file_temporary_path
 features[variable][] = filter_fallback_format
