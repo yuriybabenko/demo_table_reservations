@@ -201,7 +201,7 @@ function foodie_booking_restaurant_validate($form, &$form_state) {
           $all_seats[$num_seats][] = $seat->id;
         } 
 
-        // sort the table bank by table capacity for optimal seating selections
+        // sort the seat bank by table capacity for optimal seating selections
         // below
         ksort($all_seats);
 
