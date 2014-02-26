@@ -21,7 +21,7 @@ define('FOODIE_BOOKING_PATH', drupal_get_path('module', 'foodie_booking'));
  */
 function foodie_booking_init() {
   // users don't need access to these internal pages
-  if (preg_match('#^booking|seating#', $_GET['q'])) {
+  if (preg_match('#^(booking|seating)#', $_GET['q'])) {
     drupal_goto();
   }
 }
@@ -31,7 +31,10 @@ function foodie_booking_init() {
  */
 function foodie_booking_form_alter(&$form, &$form_state, $form_id) {
   // booking restaurant
-  if (preg_match('#eck__entity__form_add|edit_booking_restaurant#', $form_id)) {
+  if (preg_match('#eck__entity__form_(add|edit)_booking_restaurant#', $form_id)) {
+    // flag to mark an existing entity (ie. updating instead of adding)
+    $updating = isset($form['#entity']->id);
+
     // make title non-required and hide it; we'll automatically generate a value for it
     // in hook_entity_presave()
     $form['title']['#required'] = FALSE;
@@ -49,8 +52,13 @@ function foodie_booking_form_alter(&$form, &$form_state, $form_id) {
     // add clear after num people
     $form['field_num_people']['#suffix'] = '<div class="clear"></div>';
 
-    // update Submit button text
+    // update Submit button text on creation
     $form['submit']['#value'] = t('Make Reservation');
+
+    // update Submit button text on edit
+    if ($updating) {
+      $form['submit']['#value'] = t('Update Reservation');
+    }
 
     // add class so we can target the form and add CSS
     $form['#attributes']['class'] = 'booking-entity-form';
@@ -60,6 +68,9 @@ function foodie_booking_form_alter(&$form, &$form_state, $form_id) {
     // form handlers
     $form['#after_build'][] = 'foodie_booking_restaurant_after_build';
     $form['#validate'][] = 'foodie_booking_restaurant_validate';
+  }
+  elseif (preg_match('#eck__entity__form_(add|edit)_seating_table#', $form_id)) {
+    $form['title']['#description'] = t('Enter a title to identify this seating item.');
   }
 }
 
@@ -132,12 +143,15 @@ function foodie_booking_block_view($delta = '') {
  * @return [type]             [description]
  */
 function foodie_booking_restaurant_after_build($form, $form_state) {
+  $updating = isset($form['#entity']->id);
+
   // update the date field's description & default value  
   $lang = $form['field_date']['#language'];
   foreach ($form['field_date'][$lang] as &$item) {
     if (isset($item['value']['time'])) {
-      // set default time value, but not if the form was submitted
-      if (!isset($form_state['triggering_element'])) {
+      // set default time value, but not if the form was submitted or
+      // if we're editing an existing entity
+      if (!isset($form_state['triggering_element']) && !$updating) {
         $item['value']['time']['#value'] = '17:00';
       }
 
@@ -152,6 +166,9 @@ function foodie_booking_restaurant_after_build($form, $form_state) {
  * Validation handler for for eck__entity__form_add|edit_booking_restaurant
  */
 function foodie_booking_restaurant_validate($form, &$form_state) {
+  // flag to mark an existing entity (ie. updating instead of adding)
+  $updating = isset($form['#entity']->id);
+
   $values = $form_state['values'];
 
   // depending on the state of validation of other fields, the value in field_date
@@ -176,11 +193,13 @@ function foodie_booking_restaurant_validate($form, &$form_state) {
     form_set_error('field_date', t('Reservations must be between 17:00 and 21:00 hours.'));
   }
 
-  // account for past dates
-  $now  = new DateTime();
-  $diff = $now->diff($date);
-  if ($diff->invert) {
-    form_set_error('field_date', t('Reservations can only be made for future dates.'));
+  // account for past dates, but not when updating reservations
+  if (!$updating) {
+    $now  = new DateTime();
+    $diff = $now->diff($date);
+    if ($diff->invert) {
+      form_set_error('field_date', t('Reservations can only be made for future dates.'));
+    }
   }
 
   // figure out whether we can fit this reservation
@@ -191,19 +210,7 @@ function foodie_booking_restaurant_validate($form, &$form_state) {
 
     if ($result = $query->execute()) {
       // build a data structure containing all possible seats (the "seat bank")
-        $all_seats = array();
-
-        $seating = entity_load('seating', array_keys($result['seating']));
-        foreach ($seating as $seat) {
-          $wrapper = entity_metadata_wrapper('seating', $seat);
-          $num_seats = $wrapper->field_num_seats->value();
-
-          $all_seats[$num_seats][] = $seat->id;
-        } 
-
-        // sort the seat bank by table capacity for optimal seating selections
-        // below
-        ksort($all_seats);
+        $all_seats = _build_seat_bank(array_keys($result['seating']));
 
       // pull up all reservations for the same seating type that are +/- 45min of current item
       // as that's the interval which will overlap and may have conflicts
@@ -220,28 +227,18 @@ function foodie_booking_restaurant_validate($form, &$form_state) {
           ->entityCondition('bundle', 'restaurant')
           ->fieldCondition('field_date', 'value', $date_lower->getTimestamp(), '>=')
           ->fieldCondition('field_date', 'value', $date_upper->getTimestamp(), '<=')
+          ->fieldCondition('field_seating_type', 'value', $seating_type)
           ->fieldOrderBy('field_date', 'value', 'ASC');
 
       // go through existing reservations and remove the required seats from our seat bank
         if ($result = $query->execute()) {
+          if ($updating) {
+            unset($result['booking'][$form['#entity']->id]);
+          }
+
           $bookings = entity_load('booking', array_keys($result['booking']));
 
-          foreach ($bookings as $booking) {
-            $wrapper = entity_metadata_wrapper('booking', $booking);
-            $num_people = $wrapper->field_num_people->value();
-          
-            // the party number matches a single table's capacity
-            if (isset($all_seats[$num_people])) {
-              _grab_seat($all_seats, $num_people);
-            }
-            else {
-              foreach (array_keys($all_seats) as $capacity) {
-                if ($capacity >= $num_people) {
-                  _grab_seat($all_seats, $capacity);
-                }
-              }
-            }
-          }
+          _remove_reserved_seating($all_seats, $bookings);
         }
 
       // now that we've removed seats which are already booked, we check what's left
@@ -288,17 +285,87 @@ function _single_form_value($field, $key = 'value') {
 }
 
 /**
+ * Builds an array structure containing all available seating options
+ * from specified seating ids.
+ * 
+ * @param  [type] $ids [description]
+ * @return [type]      [description]
+ */
+function _build_seat_bank($ids) {
+  $all_seats = array();
+
+  $seating = entity_load('seating', $ids);
+  foreach ($seating as $seat) {
+    $wrapper = entity_metadata_wrapper('seating', $seat);
+    // table
+    if (isset($wrapper->field_num_seats)) {
+      $num_seats = $wrapper->field_num_seats->value();
+    }
+    // bar
+    else {
+      $num_seats = 1;
+    }
+
+    $all_seats[$num_seats][] = $seat->id;
+  } 
+
+  // sort the seat bank by table capacity for optimal seating selections
+  // below
+  ksort($all_seats);
+
+  return $all_seats;
+}
+
+/**
+ * Removes the necessary reserved seating from the seat bank, based on
+ * the reservations.
+ * 
+ * @param  [type] $seat_bank [description]
+ * @param  [type] $bookings  [description]
+ * @return [type]            [description]
+ */
+function _remove_reserved_seating(&$seat_bank, $bookings) {
+  foreach ($bookings as $booking) {
+    $wrapper = entity_metadata_wrapper('booking', $booking);
+    $num_people = $wrapper->field_num_people->value();
+    
+    // the party number matches a single table's capacity
+    if (isset($seat_bank[$num_people])) {
+      _grab_seat($seat_bank, $num_people);
+    }
+    else {
+      foreach (array_keys($seat_bank) as $capacity) {
+        if ($capacity >= $num_people) {
+          _grab_seat($seat_bank, $capacity);
+        }
+      }
+    }
+  }
+}
+
+/**
  * Occupies a seat of given capacity in seat bank.
  * 
- * @param  [type] $all_seats [description]
+ * @param  [type] $seat_bank [description]
  * @param  [type] $capacity  [description]
  * @return [type]            [description]
  */
-function _grab_seat(&$all_seats, $capacity) {
-  array_pop($all_seats[$capacity]);
+function _grab_seat(&$seat_bank, $capacity) {
+  array_pop($seat_bank[$capacity]);
 
   // was this the last table with this capacity?
-  if (empty($all_seats[$capacity])) {
-    unset($all_seats[$capacity]);
+  if (empty($seat_bank[$capacity])) {
+    unset($seat_bank[$capacity]);
   }
+}
+
+/**
+ * Counts the number of grandchildren by counting children & grandchildren,
+ * and then subtracting the children
+ * 
+ * @param  [type] $data [description]
+ * @return [type]       [description]
+ */
+function _count_grandchildren($data) {
+  return sizeof($data, COUNT_RECURSIVE) - sizeof($data);
 }

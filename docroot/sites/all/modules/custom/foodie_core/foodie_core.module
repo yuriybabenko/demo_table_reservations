@@ -15,9 +15,27 @@ if (module_exists('devtools')) {
   devtools_load();
 }
 
+// user role ids
+define('FOODIE_CORE_RID_ADMIN', 3);
+define('FOODIE_CORE_RID_OWNER', 4);
+
 /*----------------------------------------------------------------------------
       DRUPAL HOOKS
 ----------------------------------------------------------------------------*/
+
+/**
+ * Implements hook_init().
+ */
+function foodie_core_init() {
+  if (isset($_SESSION['messages']['status'])) {
+    foreach ($_SESSION['messages']['status'] as &$message) {
+      // update the ugly confirmation message hardcoded by ECK
+      if (preg_match('#^Entity\s[0-9]+.*has\sbeen\ssaved$#', $message)) {
+        $message = t('Your reservation has been saved.');
+      }
+    }
+  }
+}
 
 /**
  * Implements hook_menu().
@@ -30,12 +48,39 @@ function foodie_core_menu() {
     'type' => MENU_NORMAL_ITEM,
   );
 
+  $items['reports'] = array(
+    'page callback' => 'foodie_core_reports_page',
+    'access callback' => 'foodie_core_access',
+    'file' => 'foodie_core.pages.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
   return $items;
 }
 
 /*----------------------------------------------------------------------------
-      MODULE HOOKS
+      CALLBACKS
 ----------------------------------------------------------------------------*/
+
+/**
+ * Access callback for /reports
+ * 
+ * @return [type]          [description]
+ */
+function foodie_core_access() {
+  global $user;
+
+  $allowed = array(
+    FOODIE_CORE_RID_ADMIN, 
+    FOODIE_CORE_RID_OWNER
+  );
+
+  if (array_intersect($allowed, array_keys($user->roles))) {
+    return TRUE;
+  }
+
+  return FALSE;
+}
 
 /*----------------------------------------------------------------------------
       INTERNAL

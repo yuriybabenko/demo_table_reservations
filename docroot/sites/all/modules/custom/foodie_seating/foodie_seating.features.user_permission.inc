@@ -13,7 +13,9 @@ function foodie_seating_user_default_permissions() {
   // Exported permission: 'eck add seating bar entities'.
   $permissions['eck add seating bar entities'] = array(
     'name' => 'eck add seating bar entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
@@ -27,14 +29,18 @@ function foodie_seating_user_default_permissions() {
   // Exported permission: 'eck add seating table entities'.
   $permissions['eck add seating table entities'] = array(
     'name' => 'eck add seating table entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
   // Exported permission: 'eck administer seating bar entities'.
   $permissions['eck administer seating bar entities'] = array(
     'name' => 'eck administer seating bar entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
@@ -48,14 +54,18 @@ function foodie_seating_user_default_permissions() {
   // Exported permission: 'eck administer seating table entities'.
   $permissions['eck administer seating table entities'] = array(
     'name' => 'eck administer seating table entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
   // Exported permission: 'eck delete seating bar entities'.
   $permissions['eck delete seating bar entities'] = array(
     'name' => 'eck delete seating bar entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
@@ -69,14 +79,18 @@ function foodie_seating_user_default_permissions() {
   // Exported permission: 'eck delete seating table entities'.
   $permissions['eck delete seating table entities'] = array(
     'name' => 'eck delete seating table entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
   // Exported permission: 'eck edit seating bar entities'.
   $permissions['eck edit seating bar entities'] = array(
     'name' => 'eck edit seating bar entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
@@ -90,14 +104,18 @@ function foodie_seating_user_default_permissions() {
   // Exported permission: 'eck edit seating table entities'.
   $permissions['eck edit seating table entities'] = array(
     'name' => 'eck edit seating table entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
   // Exported permission: 'eck list seating bar entities'.
   $permissions['eck list seating bar entities'] = array(
     'name' => 'eck list seating bar entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
@@ -111,21 +129,27 @@ function foodie_seating_user_default_permissions() {
   // Exported permission: 'eck list seating table entities'.
   $permissions['eck list seating table entities'] = array(
     'name' => 'eck list seating table entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
   // Exported permission: 'eck view seating bar entities'.
   $permissions['eck view seating bar entities'] = array(
     'name' => 'eck view seating bar entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
   // Exported permission: 'eck view seating table entities'.
   $permissions['eck view seating table entities'] = array(
     'name' => 'eck view seating table entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 

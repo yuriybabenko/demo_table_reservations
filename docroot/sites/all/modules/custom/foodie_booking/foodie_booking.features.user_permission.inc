@@ -20,14 +20,18 @@ function foodie_booking_user_default_permissions() {
   // Exported permission: 'eck add booking catering entities'.
   $permissions['eck add booking catering entities'] = array(
     'name' => 'eck add booking catering entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
   // Exported permission: 'eck add booking restaurant entities'.
   $permissions['eck add booking restaurant entities'] = array(
     'name' => 'eck add booking restaurant entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
@@ -41,14 +45,18 @@ function foodie_booking_user_default_permissions() {
   // Exported permission: 'eck administer booking catering entities'.
   $permissions['eck administer booking catering entities'] = array(
     'name' => 'eck administer booking catering entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
   // Exported permission: 'eck administer booking restaurant entities'.
   $permissions['eck administer booking restaurant entities'] = array(
     'name' => 'eck administer booking restaurant entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
@@ -62,14 +70,18 @@ function foodie_booking_user_default_permissions() {
   // Exported permission: 'eck delete booking catering entities'.
   $permissions['eck delete booking catering entities'] = array(
     'name' => 'eck delete booking catering entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
   // Exported permission: 'eck delete booking restaurant entities'.
   $permissions['eck delete booking restaurant entities'] = array(
     'name' => 'eck delete booking restaurant entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
@@ -83,14 +95,18 @@ function foodie_booking_user_default_permissions() {
   // Exported permission: 'eck edit booking catering entities'.
   $permissions['eck edit booking catering entities'] = array(
     'name' => 'eck edit booking catering entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
   // Exported permission: 'eck edit booking restaurant entities'.
   $permissions['eck edit booking restaurant entities'] = array(
     'name' => 'eck edit booking restaurant entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
@@ -104,28 +120,36 @@ function foodie_booking_user_default_permissions() {
   // Exported permission: 'eck list booking catering entities'.
   $permissions['eck list booking catering entities'] = array(
     'name' => 'eck list booking catering entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
   // Exported permission: 'eck list booking restaurant entities'.
   $permissions['eck list booking restaurant entities'] = array(
     'name' => 'eck list booking restaurant entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
   // Exported permission: 'eck view booking catering entities'.
   $permissions['eck view booking catering entities'] = array(
     'name' => 'eck view booking catering entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 
   // Exported permission: 'eck view booking restaurant entities'.
   $permissions['eck view booking restaurant entities'] = array(
     'name' => 'eck view booking restaurant entities',
-    'roles' => array(),
+    'roles' => array(
+      'owner' => 'owner',
+    ),
     'module' => 'eck',
   );
 

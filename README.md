@@ -1,7 +1,6 @@
 Demo Project: Restaurant Table Reservation System
 =====
-Goal:
-  Develop a system that will allow users to reserve tables at a restaurant.
+Goal: Develop a system that will allow users to reserve tables at a restaurant.
 
 End User - Makes reservations
 - Can choose how large their party will be
@@ -29,6 +28,7 @@ Additional assumptions:
 Limitations:
 - Does not account for parties larger than max table size (ie. if the largest table in the system can fit 4 people, a party of 5 will never be allowed to reserve)
 - Entered phone value must be a real, North American phone number. Test values such as 123-123-1234 and 604-123-1234 will fail validation.
+- The 'Average number of tables used' requirement is very vague and doesn't make much sense without additional restrictions on timespans. Implementation shows the average number of reserved seatings (both tables and bar stools) per hour for the next day (ie. if viewing on Tuesday, the value shown will be for Wednesday). A (hour long) reservation made during the middle of the hour (ex. 17:30) will be counted for the hour during which it started (17:00), and will not be counted for the hour it overlaps (18:00-18:30).
 
 Accounts:
 - admin/admin

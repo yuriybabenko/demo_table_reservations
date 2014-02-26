@@ -32,6 +32,24 @@ function foodie_core_context_default_contexts() {
           'region' => 'content',
           'weight' => '-10',
         ),
+        'views-9e8e55f7641702c5d909458cf647fc9e' => array(
+          'module' => 'views',
+          'delta' => '9e8e55f7641702c5d909458cf647fc9e',
+          'region' => 'content',
+          'weight' => '-9',
+        ),
+        'views-seating-seating_options' => array(
+          'module' => 'views',
+          'delta' => 'seating-seating_options',
+          'region' => 'content',
+          'weight' => '-8',
+        ),
+        'menu-menu-site-management' => array(
+          'module' => 'menu',
+          'delta' => 'menu-site-management',
+          'region' => 'help',
+          'weight' => '-10',
+        ),
       ),
     ),
   );
